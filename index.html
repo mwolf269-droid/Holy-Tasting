@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOLY Tasting Dashboard v6.4</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --primary: #2563eb;
+            --border: #e2e8f0;
+            --star-active: #ffb300;
+            --star-inactive: #cbd5e1;
+            --add-btn-bg: #e2e8f0;
+            --accent: #22c55e;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0f172a;
+                --card-bg: #1e293b;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --primary: #3b82f6;
+                --border: #334155;
+                --star-inactive: #475569;
+                --add-btn-bg: #334155;
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 30px; transition: background-color 0.3s, color 0.3s; }
+        
+        header { background-color: var(--card-bg); border-bottom: 1px solid var(--border); padding: 16px; position: sticky; top: 0; z-index: 10; text-align: center; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 1.2rem; font-weight: 800; width: 100%; text-align: center; }
+        
+        .nav-btn { background: var(--primary); color: white; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; display: none; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+        
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center; }
+        .stat-val { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin: 4px 0; }
+        .stat-lbl { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+        
+        .progress-container { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        .progress-bar-bg { background: var(--border); height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+        .progress-bar-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.5s ease-out; }
+        
+        .dashboard-title { font-size: 1.1rem; font-weight: 700; margin: 24px 0 10px 0; color: var(--text-main); display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+        
+        .roulette-container { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+        .roulette-select, .ranking-select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-main); font-weight: 600; font-size: 0.95rem; margin-bottom: 12px; }
+        .ranking-select { width: auto; max-width: 180px; padding: 6px 10px; font-size: 0.8rem; margin-bottom: 0; }
+        
+        .roulette-btn { background: #8b5cf6; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+        .roulette-btn:disabled { background: var(--star-inactive); cursor: not-allowed; }
+        .roulette-result { margin-top: 14px; padding: 12px; border-radius: 8px; background: rgba(139, 92, 246, 0.1); border: 1px dashed #8b5cf6; display: none; }
+        
+        .top-list { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; max-height: 320px; overflow-y: auto; }
+        .top-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+        .top-item:last-child { border-bottom: none; }
+        .top-rank { font-weight: 800; color: var(--star-active); margin-right: 8px; width: 24px; display: inline-block; }
+        .top-cat-badge { font-size: 0.7rem; background: var(--border); color: var(--text-muted); padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: 600; vertical-align: middle; }
+        
+        .btn-big-action { background: var(--primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; font-size: 1.05rem; font-weight: 700; cursor: pointer; text-align: center; margin-top: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        
+        .category-header { display: flex; justify-content: space-between; align-items: center; margin: 24px 0 12px 0; }
+        .category-title { font-size: 1.05rem; font-weight: 700; color: var(--primary); }
+        .btn-add-flavor { background: var(--add-btn-bg); color: var(--text-main); border: none; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        .flavor-list { display: flex; flex-direction: column; gap: 10px; }
+        .flavor-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .card-right { display: flex; align-items: center; gap: 12px; }
+        .status-badge { font-size: 0.75rem; background: rgba(34, 197, 94, 0.1); color: #22c55e; padding: 4px 8px; border-radius: 6px; font-weight: 600; border: 1px solid rgba(34, 197, 94, 0.2); }
+        .btn-delete-flavor { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: flex-end; z-index: 100; }
+        .modal { background: var(--card-bg); width: 100%; max-width: 600px; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 24px 16px 40px 16px; border: 1px solid var(--border); }
+        .rating-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .star { font-size: 1.6rem; color: var(--star-inactive); cursor: pointer; padding: 0 2px; }
+        .star.active { color: var(--star-active); }
+        textarea, .input-field { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; background: var(--bg-color); color: var(--text-main); }
+        textarea { height: 80px; margin-top: 10px; resize: none; }
+        .modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .main-actions { display: flex; gap: 12px; }
+        .btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; font-size: 0.95rem; text-align: center; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: var(--border); color: var(--text-main); }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); width: 100%; }
+        
+        .mgmt-section { margin-top: 24px; padding-top: 16px; border-top: 2px dashed var(--border); display: flex; flex-direction: column; gap: 10px; }
+        .btn-mgmt { background: var(--card-bg); border: 1px solid var(--border); color: var(--text-main); padding: 12px; font-size: 0.85rem; border-radius: 8px; cursor: pointer; font-weight: 600; text-align: center; }
+        .btn-mgmt-danger { background: rgba(239, 68, 68, 0.08); border: 1px dashed #ef4444; color: #ef4444; }
+    </style>
+</head>
+
+  <body>
+
+    <header>
+        <button id="backToDashBtn" class="nav-btn" onclick="switchView('dashboard')">📊 Dashboard</button>
+        <h1 id="appHeaderTitle">HOLY Hub</h1>
+        <div style="width: 80px; display: flex; justify-content: flex-end;">
+            <button id="listNavBtn" class="nav-btn" onclick="switchView('list')" style="display: block;">📝 Liste</button>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div id="view-dashboard" class="view-section active">
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div id="stat-tested" class="stat-val">0</div>
+                    <div class="stat-lbl">Sorten probiert</div>
+                </div>
+                <div class="stat-card">
+                    <div id="stat-total" class="stat-val">0</div>
+                    <div class="stat-lbl">Sorten im System</div>
+                </div>
+            </div>
+
+            <div class="progress-container">
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700;">
+                    <span>Gesamter Tasting-Fortschritt</span>
+                    <span id="stat-progress-percent">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="stat-progress-bar" class="progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <div class="dashboard-title">🎲 Tasting Roulette (Unprobiert)</div>
+            <div class="roulette-container">
+                <select id="rouletteCategory" class="roulette-select">
+                    <option value="all">🌍 Alle Rubriken gemischt</option>
+                    <option value="e">⚡ HOLY Energy</option>
+                    <option value="t">🧊 HOLY Iced Tea</option>
+                    <option value="h">💧 HOLY Hydration</option>
+                    <option value="m">🥛 HOLY Milkshake</option>
+                </select>
+                <button id="rouletteButton" class="roulette-btn" onclick="spinRoulette()">🎰 Sorte zufällig auslosen</button>
+                <div id="rouletteResult" class="roulette-result"></div>
+            </div>
+
+            <button class="btn-big-action" onclick="switchView('list')">🥤 Jetzt alle Sorten ansehen</button>
+
+            <div class="dashboard-title">
+                <span>🏆 Sorten-Ranking</span>
+                <select id="rankingCategoryFilter" class="ranking-select" onchange="calculateDashboardStats()">
+                    <option value="all">🌍 Gesamt-Top</option>
+                    <option value="e">⚡ Energy</option>
+                    <option value="t">🧊 Iced Tea</option>
+                    <option value="h">💧 Hydration</option>
+                    <option value="m">🥛 Milkshake</option>
+                </select>
+            </div>
+            <div id="dashboard-ranking-list" class="top-list">
+                </div>
+
+            <div class="mgmt-section">
+                <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted); margin-bottom: 2px;">⚙️ Daten & App-Verwaltung</div>
+                <button class="btn-mgmt" onclick="updateAppVersion(true)">🔄 App-Cache leeren & Update erzwingen</button>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-mgmt" style="flex:1;" onclick="exportBackup()">📤 JSON Export</button>
+                    <button class="btn-mgmt" style="flex:1;" onclick="triggerImportInput()">📥 JSON Import</button>
+                </div>
+                <button class="btn-mgmt btn-mgmt-danger" onclick="clearEntireLocalStorage()">⚠️ App komplett zurücksetzen (Werkseinstellungen)</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importBackup(this)">
+            </div>
+        </div>
+
+        <div id="view-list" class="view-section">
+            <div id="app-content">Sorten werden geladen...</div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h2 id="modalFlavorName">Sorte</h2>
+            <p id="modalFlavorDesc" style="color: var(--text-muted); margin-bottom: 15px;"></p>
+            
+            <div class="rating-row"><span>👃 Geruch</span><div class="stars" data-metric="geruch"><span class="star" data-value="1">★</span><span class="star" data-value="2">★</span><span class="star" data-value="3">★</span><span class="star" data-value="4">★</span><span class="star" data-value="5">★</span></div></div>
+            <div class="rating-row"><span>👅 Geschmack</span><div class="stars" data-metric="geschmack"><span class="star" data-value="1">★</span><span class="star" data-value="2">★</span><span class="star" data-value="3">★</span><span class="star" data-value="4">★</span><span class="star" data-value="5">★</span></div></div>
+            <div class="rating-row"><span>⚖️ Balance</span><div class="stars" data-metric="balance"><span class="star" data-value="1">★</span><span class="star" data-value="2">★</span><span class="star" data-value="3">★</span><span class="star" data-value="4">★</span><span class="star" data-value="5">★</span></div></div>
+            <div class="rating-row"><span>💥 Intensität</span><div class="stars" data-metric="intensitaet"><span class="star" data-value="1">★</span><span class="star" data-value="2">★</span><span class="star" data-value="3">★</span><span class="star" data-value="4">★</span><span class="star" data-value="5">★</span></div></div>
+
+            <textarea id="modalFazit" placeholder="Mein Fazit..."></textarea>
+
+            <div class="modal-actions">
+                <div class="main-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+                    <button class="btn btn-primary" onclick="saveRatings()">Speichern</button>
+                </div>
+                <button id="deleteBtn" class="btn btn-danger" onclick="deleteRatings()">Bewertung löschen</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addFlavorOverlay">
+        <div class="modal">
+            <h2>Sorte manuell hinzufügen</h2>
+            <input type="hidden" id="addFlavorCatIndex">
+            <div style="margin: 12px 0;"><input type="text" id="newFlavorName" class="input-field" placeholder="Name der Sorte (z.B. Mango Monster)"></div>
+            <div style="margin: 12px 0;"><input type="text" id="newFlavorDesc" class="input-field" placeholder="Beschreibung (z.B. Exotische Mango)"></div>
+            <div class="modal-actions"><div class="main-actions"><button class="btn btn-secondary" onclick="closeAddFlavorModal()">Abbrechen</button><button class="btn btn-primary" onclick="saveCustomFlavor()">Hinzufügen</button></div></div>
+        </div>
+    </div>
+
+        <script>
+        const APP_VERSION = "6.4";
+
+        const baseDataset = [
+            { category: "⚡ HOLY Energy", prefix: "e", short: "Energy", flavors: [{id:"e1",name:"Raspberry Raptor",desc:"Himbeere & Yuzu"},{id:"e2",name:"Citrus Cobra",desc:"Zitrusfrüchte & Kalamansi"},{id:"e3",name:"Strawberry Shark",desc:"Erdbeere & Mandarine"},{id:"e4",name:"Apple Alligator",desc:"Saurer Apfel"},{id:"e5",name:"Cherry Cheetah",desc:"Kirsche"},{id:"e6",name:"Watermelon Whale",desc:"Wassermelone"},{id:"e7",name:"Pomegranate Piranha",desc:"Granatapfel"},{id:"e8",name:"Fruity Frog",desc:"Verschiedene Früchte"}] },
+            { category: "🧊 HOLY Iced Tea", prefix: "t", short: "Iced Tea", flavors: [{id:"t1",name:"Peach / White Peach",desc:"Pfirsich-Klassiker"},{id:"t2",name:"Raspberry Vanilla",desc:"Himbeere & Vanille"},{id:"t3",name:"Lemon Honey",desc:"Zitrone & Honig"},{id:"t4",name:"Mango Passion Fruit",desc:"Mango & Maracuja"},{id:"t5",name:"Lime Matcha",desc:"Limette & Matcha"},{id:"t6",name:"Apple",desc:"Apfel"},{id:"t7",name:"Acai",desc:"Superfrucht Acai"}] },
+            { category: "💧 HOLY Hydration", prefix: "h", short: "Hydration", flavors: [{id:"h1",name:"White Peach",desc:"Weißer Pfirsich"},{id:"h2",name:"Strawberry Kiwi",desc:"Erdbeere & Kiwi"},{id:"h3",name:"Coconut",desc:"Kokosnusswasser"},{id:"h4",name:"Sour Cherry",desc:"Sauerkirsche"},{id:"h5",name:"Lemon",desc:"Zitrone"},{id:"h6",name:"Pineapple",desc:"Ananas"},{id:"h7",name:"Pear",desc:"Birne"}] },
+            { category: "🥛 HOLY Milkshake", prefix: "m", short: "Milkshake", flavors: [{id:"m1",name:"Vanille",desc:"Cremiger Vanille-Shake"},{id:"m2",name:"Schoko",desc:"Cremiger Schoko-Shake"},{id:"m3",name:"Erdbeere",desc:"Fruchtiger Erdbeer-Shake"}] }
+        ];
+
+        let userRatings = {};
+        let customFlavors = { e: [], t: [], h: [], m: [] };
+        let currentFlavorId = null;
+        let tempRatings = { geruch: 0, geschmack: 0, balance: 0, intensitaet: 0 };
+
+        function loadStorageData() {
+            try { userRatings = JSON.parse(localStorage.getItem('holy_ratings')) || {}; } catch(e) { userRatings = {}; }
+            try {
+                const c = JSON.parse(localStorage.getItem('holy_custom_flavors'));
+                if (c && c.e) customFlavors = c;
+            } catch(e) { customFlavors = { e: [], t: [], h: [], m: [] }; }
+        }
+
+        function getFullDataset() {
+            return baseDataset.map(cat => { return { ...cat, flavors: [...cat.flavors, ...(customFlavors[cat.prefix] || [])] }; });
+        }
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('view-' + viewName).classList.add('active');
+            
+            if(viewName === 'dashboard') {
+                document.getElementById('backToDashBtn').style.display = 'none';
+                document.getElementById('listNavBtn').style.display = 'block';
+                document.getElementById('appHeaderTitle').innerText = '☕ HOLY Hub';
+                document.getElementById('rouletteResult').style.display = 'none';
+                calculateDashboardStats();
+            } else {
+                document.getElementById('backToDashBtn').style.display = 'block';
+                document.getElementById('listNavBtn').style.display = 'none';
+                document.getElementById('appHeaderTitle').innerText = '🥤 Sortenliste';
+                renderApp();
+            }
+        }
+
+        function calculateDashboardStats() {
+            const fullDataset = getFullDataset();
+            const filterCat = document.getElementById('rankingCategoryFilter').value;
+            let totalFlavors = 0; let testedFlavors = 0; let rankedItems = [];
+
+            fullDataset.forEach(cat => {
+                cat.flavors.forEach(f => {
+                    totalFlavors++;
+                    const rating = userRatings[f.id];
+                    if(rating && (rating.geschmack > 0 || rating.geruch > 0 || rating.fazit)) {
+                        testedFlavors++;
+                        // Nur ins Ranking aufnehmen, wenn es dem Filter entspricht
+                        if(filterCat === 'all' || cat.prefix === filterCat) {
+                            const score = ((rating.geschmack || 0) + (rating.geruch || 0) + (rating.balance || 0) + (rating.intensitaet || 0)) / 4;
+                            if(score > 0) rankedItems.push({ name: f.name, score: score, mainStar: rating.geschmack || 0, catLabel: cat.short });
+                        }
+                    }
+                });
+            });
+
+            document.getElementById('stat-total').innerText = totalFlavors;
+            document.getElementById('stat-tested').innerText = testedFlavors;
+            const percent = totalFlavors > 0 ? Math.round((testedFlavors / totalFlavors) * 100) : 0;
+            document.getElementById('stat-progress-percent').innerText = percent + "%";
+            document.getElementById('stat-progress-bar').style.width = percent + "%";
+
+            // Sortierung nach Score, danach nach primärem Geschmack
+            rankedItems.sort((a, b) => b.score - a.score || b.mainStar - a.mainStar);
+            const rankingContainer = document.getElementById('dashboard-ranking-list'); rankingContainer.innerHTML = '';
+            
+            if(rankedItems.length === 0) {
+                rankingContainer.innerHTML = '<div style="padding:16px; text-align:center; color:var(--text-muted); font-size:0.9rem;">Keine bewerteten Sorten für diese Auswahl.</div>';
+            } else {
+                rankedItems.forEach((item, idx) => {
+                    const row = document.createElement('div'); row.className = 'top-item';
+                    row.innerHTML = `<div><span class="top-rank">#${idx+1}</span><strong>${item.name}</strong><span class="top-cat-badge">${item.catLabel}</span></div><div style="color:var(--star-active); font-weight:700;">${item.score.toFixed(1)} ★</div>`;
+                    rankingContainer.appendChild(row);
+                });
+            }
+        }
+
+        function spinRoulette() {
+            const chosenCat = document.getElementById('rouletteCategory').value;
+            const fullDataset = getFullDataset();
+            let unratedFlavors = [];
+
+            fullDataset.forEach(cat => {
+                if(chosenCat === 'all' || cat.prefix === chosenCat) {
+                    cat.flavors.forEach(f => {
+                        const rating = userRatings[f.id];
+                        const isRated = rating && (rating.geschmack > 0 || rating.geruch > 0 || rating.fazit);
+                        if(!isRated) unratedFlavors.push(f);
+                    });
+                }
+            });
+
+            const resultDiv = document.getElementById('rouletteResult'); resultDiv.style.display = 'block';
+
+            if(unratedFlavors.length === 0) {
+                resultDiv.innerHTML = `<p style="font-weight:700; color:#ef4444;">🏆 Stark! Du hast bereits alle Sorten dieser Rubrik probiert und bewertet!</p>`;
+                return;
+            }
+
+            let counter = 0;
+            const btn = document.getElementById('rouletteButton'); btn.disabled = true;
+
+            const interval = setInterval(() => {
+                const randomSample = unratedFlavors[Math.floor(Math.random() * unratedFlavors.length)];
+                resultDiv.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">Mische Sorten...</p><strong style="font-size:1.1rem; color:#8b5cf6;">${randomSample.name}</strong>`;
+                counter++;
+                
+                if(counter > 10) {
+                    clearInterval(interval);
+                    const finalSelection = unratedFlavors[Math.floor(Math.random() * unratedFlavors.length)];
+                    resultDiv.innerHTML = `
+                        <p style="font-size:0.85rem; color:var(--accent); font-weight:700;">✨ Dein Match für heute:</p>
+                        <strong style="font-size:1.2rem; color:var(--text-main); display:block; margin:4px 0;">${finalSelection.name}</strong>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;">${finalSelection.desc}</p>
+                        <button class="btn btn-primary" style="padding:6px 12px; font-size:0.85rem;" onclick="switchView('list'); openModal('${finalSelection.id}', '${finalSelection.name.replace(/'/g, "\\'")}', '${finalSelection.desc.replace(/'/g, "\\'")}')">Jetzt bewerten</button>
+                    `;
+                    btn.disabled = false;
+                }
+            }, 80);
+        }
+
+        function renderApp() {
+            const container = document.getElementById('app-content');
+            if(!container) return; container.innerHTML = '';
+            
+            getFullDataset().forEach((cat, index) => {
+                const headerDiv = document.createElement('div'); headerDiv.className = 'category-header';
+                headerDiv.innerHTML = `<div class="category-title">${cat.category}</div><button class="btn-add-flavor" onclick="openAddFlavorModal(${index})">➕ Sorte</button>`;
+                container.appendChild(headerDiv);
+
+                const list = document.createElement('div'); list.className = 'flavor-list';
+                cat.flavors.forEach(f => {
+                    const card = document.createElement('div'); card.className = 'flavor-card';
+                    card.onclick = () => openModal(f.id, f.name, f.desc);
+                    
+                    const isCustom = f.id.includes('_custom_');
+                    const isRated = userRatings[f.id] && (userRatings[f.id].geschmack > 0 || userRatings[f.id].fazit);
+                    
+                    let rightSide = '<div class="card-right">';
+                    if (isRated) rightSide += `<div class="status-badge">${userRatings[f.id].geschmack || 0} ★</div>`;
+                    if (isCustom) rightSide += `<button class="btn-delete-flavor" onclick="deleteCustomFlavor(event, '${cat.prefix}', '${f.id}')">🗑️</button>`;
+                    rightSide += '</div>';
+
+                    card.innerHTML = `<div class="flavor-info"><h3>${f.name}</h3><p>${f.desc}</p></div>${rightSide}`;
+                    list.appendChild(card);
+                });
+                container.appendChild(list);
+            });
+        }
+
+        function deleteCustomFlavor(event, prefix, id) {
+            event.stopPropagation();
+            if(confirm("Sorte dauerhaft löschen?")) {
+                if(customFlavors[prefix]) customFlavors[prefix] = customFlavors[prefix].filter(f => f.id !== id);
+                localStorage.setItem('holy_custom_flavors', JSON.stringify(customFlavors));
+                delete userRatings[id]; localStorage.setItem('holy_ratings', JSON.stringify(userRatings));
+                renderApp();
+            }
+        }
+
+        function openModal(id, name, desc) {
+            currentFlavorId = id;
+            document.getElementById('modalFlavorName').innerText = name;
+            document.getElementById('modalFlavorDesc').innerText = desc;
+            const existing = userRatings[id] || { geruch: 0, geschmack: 0, balance: 0, intensitaet: 0, fazit: "" };
+            tempRatings = { ...existing };
+            document.getElementById('modalFazit').value = existing.fazit || "";
+            document.querySelectorAll('.stars').forEach(sc => updateStarsVisual(sc, tempRatings[sc.getAttribute('data-metric')] || 0));
+            document.getElementById('deleteBtn').style.display = (userRatings[id]) ? 'block' : 'none';
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+        function openAddFlavorModal(catIndex) { document.getElementById('addFlavorCatIndex').value = catIndex; document.getElementById('newFlavorName').value = ''; document.getElementById('newFlavorDesc').value = ''; document.getElementById('addFlavorOverlay').style.display = 'flex'; }
+        function closeAddFlavorModal() { document.getElementById('addFlavorOverlay').style.display = 'none'; }
+
+        function saveCustomFlavor() {
+            const idx = document.getElementById('addFlavorCatIndex').value;
+            const name = document.getElementById('newFlavorName').value.trim();
+            const desc = document.getElementById('newFlavorDesc').value.trim();
+            const prefix = baseDataset[idx].prefix;
+            if(!name) return;
+            customFlavors[prefix].push({ id: prefix + "_custom_" + Date.now(), name: name, desc: desc || "Selbst hinzugefügt" });
+            localStorage.setItem('holy_custom_flavors', JSON.stringify(customFlavors));
+            closeAddFlavorModal(); renderApp();
+        }
+
+        document.querySelectorAll('.star').forEach(star => {
+            star.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const val = parseInt(this.getAttribute('data-value'));
+                const container = this.parentElement;
+                tempRatings[container.getAttribute('data-metric')] = val;
+                updateStarsVisual(container, val);
+            });
+        });
+
+        function updateStarsVisual(container, value) { container.querySelectorAll('.star').forEach(s => s.classList.toggle('active', parseInt(s.getAttribute('data-value')) <= value)); }
+        function saveRatings() { userRatings[currentFlavorId] = { ...tempRatings, fazit: document.getElementById('modalFazit').value }; localStorage.setItem('holy_ratings', JSON.stringify(userRatings)); closeModal(); renderApp(); }
+        
+        function deleteRatings() {
+            if(confirm("Bewertung löschen?")) { delete userRatings[currentFlavorId]; localStorage.setItem('holy_ratings', JSON.stringify(userRatings)); closeModal(); renderApp(); }
+        }
+
+        function exportBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ ratings: userRatings, custom: customFlavors }));
+            const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "holy_backup.json"); dl.click();
+        }
+
+        function triggerImportInput() { document.getElementById('importFile').click(); }
+        function importBackup(input) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    userRatings = data.ratings || {}; customFlavors = data.custom || { e: [], t: [], h: [], m: [] };
+                    localStorage.setItem('holy_ratings', JSON.stringify(userRatings)); localStorage.setItem('holy_custom_flavors', JSON.stringify(customFlavors));
+                    calculateDashboardStats(); alert("✅ Import erfolgreich!");
+                } catch (err) { alert("❌ Fehler beim Import."); }
+            };
+            reader.readAsText(file); input.value = '';
+        }
+
+        function clearEntireLocalStorage() {
+            if (confirm("⚠️ ACHTUNG:\nMöchtest du wirklich ALLE Daten (Bewertungen und eigene Sorten) unwiderruflich löschen?")) {
+                if (confirm("🔒 LETZTE WARNUNG:\nBist du dir absolut sicher? Alle Daten sind danach verloren, außer du hast zuvor einen JSON Export gemacht!")) {
+                    localStorage.clear();
+                    alert("🗑️ Alle lokalen Daten wurden gelöscht. Die App wird jetzt neu geladen.");
+                    window.location.reload(true);
+                }
+            }
+        }
+
+        function updateAppVersion(manual = false) {
+            if (!manual || confirm("App jetzt updaten? Daten bleiben erhalten!")) {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(regs => { for(let r of regs) r.unregister(); localStorage.setItem('holy_app_version', APP_VERSION); window.location.reload(true); });
+                } else { localStorage.setItem('holy_app_version', APP_VERSION); window.location.reload(true); }
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            loadStorageData();
+            if(localStorage.getItem('holy_app_version') !== APP_VERSION) { updateAppVersion(false); }
+            calculateDashboardStats();
+            if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+        });
+    </script>
+</body>
+</html>
