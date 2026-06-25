@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HOLY Tasting App</title>
+    <title>HOLY Tasting App v5</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,10 +15,23 @@
             --text-main: #0f172a;
             --text-muted: #64748b;
             --primary: #2563eb;
-            --primary-light: #dbeafe;
             --border: #e2e8f0;
             --star-active: #ffb300;
             --star-inactive: #cbd5e1;
+            --add-btn-bg: #e2e8f0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0f172a;
+                --card-bg: #1e293b;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --primary: #3b82f6;
+                --border: #334155;
+                --star-inactive: #475569;
+                --add-btn-bg: #334155;
+            }
         }
 
         * {
@@ -32,7 +45,8 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding-bottom: 60px;
+            padding-bottom: 80px;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         header {
@@ -70,11 +84,28 @@
             font-size: 1rem;
         }
 
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 24px 0 12px 0;
+        }
+
         .category-title {
             font-size: 1.1rem;
             font-weight: 700;
-            margin: 24px 0 12px 0;
             color: var(--primary);
+        }
+
+        .btn-add-flavor {
+            background: var(--add-btn-bg);
+            color: var(--text-main);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
         }
 
         .flavor-list {
@@ -92,6 +123,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: background-color 0.2s, border-color 0.2s;
         }
 
         .flavor-info h3 {
@@ -106,19 +138,20 @@
 
         .status-badge {
             font-size: 0.75rem;
-            background: #f0fdf4;
-            color: #166534;
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
             padding: 4px 8px;
             border-radius: 6px;
             font-weight: 600;
-            border: 1px solid #bbf7d0;
+            border: 1px solid rgba(34, 197, 94, 0.2);
             display: none;
         }
 
+        /* Modals */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.6);
             display: none;
             justify-content: center;
             align-items: flex-end;
@@ -132,6 +165,8 @@
             border-top-left-radius: 20px;
             border-top-right-radius: 20px;
             padding: 24px 16px 40px 16px;
+            border: 1px solid var(--border);
+            border-bottom: none;
         }
 
         .rating-row {
@@ -139,7 +174,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px 0;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border);
         }
 
         .star {
@@ -152,20 +187,44 @@
             color: var(--star-active);
         }
 
-        textarea {
+        textarea, .input-field {
             width: 100%;
-            height: 80px;
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 10px;
+            background: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        textarea {
+            height: 80px;
             margin-top: 10px;
             resize: none;
         }
 
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        /* Buttons & Management Area */
         .modal-actions {
             display: flex;
-            gap: 12px;
+            flex-direction: column;
+            gap: 10px;
             margin-top: 20px;
+        }
+
+        .main-actions {
+            display: flex;
+            gap: 12px;
         }
 
         .btn {
@@ -175,23 +234,83 @@
             font-weight: 600;
             border: none;
             cursor: pointer;
+            font-size: 0.95rem;
+            text-align: center;
         }
 
         .btn-primary { background: var(--primary); color: white; }
-        .btn-secondary { background: #f1f5f9; color: var(--text-main); }
+        .btn-secondary { background: var(--border); color: var(--text-main); }
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            width: 100%;
+        }
+
+        .mgmt-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px dashed var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mgmt-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .mgmt-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-mgmt {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .btn-mgmt:active {
+            background: var(--border);
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>🥤 HOLY Tasting Tracker</h1>
+        <h1>🥤 My HOLY Tasting Tracker</h1>
     </header>
 
     <div class="container">
         <button id="installBtn" class="pwa-btn">📲 App auf dem Handy installieren</button>
+        
+        <!-- Hauptinhalt (Sortenliste) -->
         <div id="app-content"></div>
+
+        <!-- Datensicherung & Update Sektor am Ende der App -->
+        <div class="mgmt-section">
+            <div class="mgmt-title">⚙️ Daten & App Verwaltung</div>
+            <button class="btn-mgmt" onclick="updateAppVersion()">🔄 App auf neueste Version updaten (Daten bleiben erhalten)</button>
+            <div class="mgmt-row">
+                <button class="btn-mgmt" onclick="exportBackup()">📤 JSON Export</button>
+                <button class="btn-mgmt" onclick="triggerImportInput()">📥 JSON Import</button>
+            </div>
+            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importBackup(this)">
+        </div>
     </div>
 
+    <!-- Modal für Bewertung -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
             <h2 id="modalFlavorName">Sorte</h2>
@@ -205,34 +324,132 @@
             <textarea id="modalFazit" placeholder="Mein Fazit..."></textarea>
 
             <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
-                <button class="btn btn-primary" onclick="saveRatings()">Speichern</button>
+                <div class="main-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+                    <button class="btn btn-primary" onclick="saveRatings()">Speichern</button>
+                </div>
+                <button id="deleteBtn" class="btn btn-danger" onclick="deleteRatings()" style="display: none;">Bewertung löschen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEU: Modal für Sorten hinzufügen -->
+    <div class="modal-overlay" id="addFlavorOverlay">
+        <div class="modal">
+            <h2>Sorte manuell hinzufügen</h2>
+            <p style="color: var(--text-muted); margin-bottom: 15px;">Füge eine neue Sorte zu dieser Kategorie hinzu.</p>
+            
+            <input type="hidden" id="addFlavorCatIndex">
+
+            <div class="input-group">
+                <label for="newFlavorName">Name der Sorte</label>
+                <input type="text" id="newFlavorName" class="input-field" placeholder="z.B. Mango Monster">
+            </div>
+
+            <div class="input-group">
+                <label for="newFlavorDesc">Beschreibung / Geschmack</label>
+                <input type="text" id="newFlavorDesc" class="input-field" placeholder="z.B. Exotische Mango mit Lime-Kick">
+            </div>
+
+            <div class="modal-actions">
+                <div class="main-actions">
+                    <button class="btn btn-secondary" onclick="closeAddFlavorModal()">Abbrechen</button>
+                    <button class="btn btn-primary" onclick="saveCustomFlavor()">Hinzufügen</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const dataset = [
-            { category: "⚡ HOLY Energy", flavors: [{id:"e1",name:"Raspberry Raptor",desc:"Himbeere x Yuzu"},{id:"e2",name:"Citrus Cobra",desc:"Zitrus x Kalamansi"},{id:"e3",name:"Strawberry Shark",desc:"Erdbeere x Mandarine"},{id:"e4",name:"Pomegranate Piranha",desc:"Granatapfel"},{id:"e5",name:"Fruity Frog",desc:"Mango x Maracuja x Ananas"},{id:"e6",name:"Apple Alligator",desc:"Saurer Apfel"},{id:"e7",name:"Watermelon Whale",desc:"Wassermelone"}] },
-            { category: "🧊 HOLY Iced Tea", flavors: [{id:"t1",name:"Lemon Lizard",desc:"Schwarztee Zitrone"},{id:"t2",name:"Peach Panther",desc:"Schwarztee Pfirsich"},{id:"t3",name:"Pomegranate Panther",desc:"Schwarztee Granatapfel"},{id:"t4",name:"Acai Alligator",desc:"Grüntee Acai"},{id:"t5",name:"Cactus Cat",desc:"Grüntee Kaktusfeige"},{id:"t6",name:"Red Berry Bear",desc:"Früchtetee Rote Beeren"},{id:"t7",name:"Mint Monkey",desc:"Grüntee Marokkanische Minze"}] },
-            { category: "💧 HOLY Hydration", flavors: [{id:"h1",name:"Yuzu Iguana",desc:"Yuzu x Lemongrass"},{id:"h2",name:"Cherry Cheetah",desc:"Sauerkirsche"},{id:"h3",name:"Tropical Tiger",desc:"Passionsfrucht x Mango"},{id:"h4",name:"Blueberry Bear",desc:"Blaue Himbeere"},{id:"h5",name:"Grapefruit Gecko",desc:"Pink Grapefruit"},{id:"h6",name:"Watermelon Wolf",desc:"Wassermelone"},{id:"h7",name:"Apple Ape",desc:"Grüner Apfel"}] },
-            { category: "🥛 HOLY Milkshake", flavors: [{id:"m1",name:"Vanilla",desc:"Klassische Vanille"},{id:"m2",name:"Hazelnut",desc:"Geröstete Haselnuss"},{id:"m3",name:"Banana",desc:"Süße Banane"},{id:"m4",name:"Caramel",desc:"Karamell"},{id:"m5",name:"Strawberry",desc:"Erdbeere"}] }
+        // Feste Standard-Sorten
+        const baseDataset = [
+            { 
+                category: "⚡ HOLY Energy (Fokus & Energie)", prefix: "e",
+                flavors: [
+                    {id:"e1",name:"Raspberry Raptor",desc:"Himbeere & Yuzu"},
+                    {id:"e2",name:"Citrus Cobra",desc:"Zitrusfrüchte & Kalamansi"},
+                    {id:"e3",name:"Strawberry Shark",desc:"Erdbeere & Mandarine"},
+                    {id:"e4",name:"Apple Alligator",desc:"Saurer Apfel"},
+                    {id:"e5",name:"Cherry Cheetah",desc:"Kirsche"},
+                    {id:"e6",name:"Watermelon Whale",desc:"Wassermelone"},
+                    {id:"e7",name:"Pomegranate Piranha",desc:"Granatapfel"},
+                    {id:"e8",name:"Fruity Frog",desc:"Verschiedene Früchte"}
+                ] 
+            },
+            { 
+                category: "🧊 HOLY Iced Tea (Echter Tee)", prefix: "t",
+                flavors: [
+                    {id:"t1",name:"Peach / White Peach",desc:"Pfirsich-Klassiker"},
+                    {id:"t2",name:"Raspberry Vanilla",desc:"Himbeere & Vanille (Hibiskustee)"},
+                    {id:"t3",name:"Lemon Honey",desc:"Zitrone & Honig (Schwarztee)"},
+                    {id:"t4",name:"Mango Passion Fruit",desc:"Mango & Maracuja (Grüntee)"},
+                    {id:"t5",name:"Lime Matcha",desc:"Limette & Matcha"},
+                    {id:"t6",name:"Apple",desc:"Apfel (Grüntee)"},
+                    {id:"t7",name:"Acai",desc:"Superfrucht Acai (Hibiskustee)"}
+                ] 
+            },
+            { 
+                category: "💧 HOLY Hydration (Sport & Elektrolyte)", prefix: "h",
+                flavors: [
+                    {id:"h1",name:"White Peach",desc:"Weißer Pfirsich"},
+                    {id:"h2",name:"Strawberry Kiwi",desc:"Erdbeere & Kiwi"},
+                    {id:"h3",name:"Coconut",desc:"Kokosnusswasser"},
+                    {id:"h4",name:"Sour Cherry",desc:"Sauerkirsche"},
+                    {id:"h5",name:"Lemon",desc:"Zitrone"},
+                    {id:"h6",name:"Pineapple",desc:"Ananas"},
+                    {id:"h7",name:"Pear",desc:"Birne"}
+                ] 
+            },
+            { 
+                category: "🥛 HOLY Milkshake (Cremig & Koffeinfrei)", prefix: "m",
+                flavors: [
+                    {id:"m1",name:"Vanille",desc:"Cremiger Vanille-Shake"},
+                    {id:"m2",name:"Schoko",desc:"Cremiger Schoko-Shake"},
+                    {id:"m3",name:"Erdbeere",desc:"Fruchtiger Erdbeer-Shake"}
+                ] 
+            }
         ];
 
         let userRatings = JSON.parse(localStorage.getItem('holy_ratings')) || {};
+        // NEU: Eigene Sorten werden dynamisch im LocalStorage gehalten
+        let customFlavors = JSON.parse(localStorage.getItem('holy_custom_flavors')) || { e: [], t: [], h: [], m: [] };
+        
         let currentFlavorId = null;
         let tempRatings = { geruch: 0, geschmack: 0, balance: 0, intensitaet: 0 };
+
+        function getFullDataset() {
+            return baseDataset.map(cat => {
+                const addedFlavors = customFlavors[cat.prefix] || [];
+                return {
+                    ...cat,
+                    flavors: [...cat.flavors, ...addedFlavors]
+                };
+            });
+        }
 
         function renderApp() {
             const container = document.getElementById('app-content');
             container.innerHTML = '';
-            dataset.forEach(cat => {
-                const title = document.createElement('div'); title.className = 'category-title'; title.innerText = cat.category; container.appendChild(title);
-                const list = document.createElement('div'); list.className = 'flavor-list';
+            const fullDataset = getFullDataset();
+
+            fullDataset.forEach((cat, index) => {
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'category-header';
+                headerDiv.innerHTML = `
+                    <div class="category-title">${cat.category}</div>
+                    <button class="btn-add-flavor" onclick="openAddFlavorModal(${index})">➕ Hinzufügen</button>
+                `;
+                container.appendChild(headerDiv);
+
+                const list = document.createElement('div');
+                list.className = 'flavor-list';
+                
                 cat.flavors.forEach(f => {
-                    const card = document.createElement('div'); card.className = 'flavor-card'; card.onclick = () => openModal(f.id, f.name, f.desc);
-                    const isRated = userRatings[f.id] && userRatings[f.id].geschmack > 0;
-                    card.innerHTML = `<div class="flavor-info"><h3>${f.name}</h3><p>${f.desc}</p></div><div class="status-badge" style="display: ${isRated ? 'block' : 'none'}">${isRated ? userRatings[f.id].geschmack + ' ★' : ''}</div>`;
+                    const card = document.createElement('div');
+                    card.className = 'flavor-card';
+                    card.onclick = () => openModal(f.id, f.name, f.desc);
+                    const isRated = userRatings[f.id] && (userRatings[f.id].geschmack > 0 || userRatings[f.id].fazit);
+                    card.innerHTML = `<div class="flavor-info"><h3>${f.name}</h3><p>${f.desc}</p></div><div class="status-badge" style="display: ${isRated ? 'block' : 'none'}">${isRated ? (userRatings[f.id].geschmack || 0) + ' ★' : ''}</div>`;
                     list.appendChild(card);
                 });
                 container.appendChild(list);
@@ -247,10 +464,42 @@
             tempRatings = { ...existing };
             document.getElementById('modalFazit').value = existing.fazit || "";
             document.querySelectorAll('.stars').forEach(sc => updateStarsVisual(sc, tempRatings[sc.getAttribute('data-metric')]));
+            
+            const isRated = userRatings[id] && (userRatings[id].geschmack > 0 || userRatings[id].geruch > 0 || userRatings[id].fazit);
+            document.getElementById('deleteBtn').style.display = isRated ? 'block' : 'none';
+            
             document.getElementById('modalOverlay').style.display = 'flex';
         }
 
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+
+        // NEU: Sorten-Modal-Funktionen
+        function openAddFlavorModal(catIndex) {
+            document.getElementById('addFlavorCatIndex').value = catIndex;
+            document.getElementById('newFlavorName').value = '';
+            document.getElementById('newFlavorDesc').value = '';
+            document.getElementById('addFlavorOverlay').style.display = 'flex';
+        }
+
+        function closeAddFlavorModal() {
+            document.getElementById('addFlavorOverlay').style.display = 'none';
+        }
+
+        function saveCustomFlavor() {
+            const catIndex = document.getElementById('addFlavorCatIndex').value;
+            const name = document.getElementById('newFlavorName').value.trim();
+            const desc = document.getElementById('newFlavorDesc').value.trim();
+            const prefix = baseDataset[catIndex].prefix;
+
+            if(!name) { alert("Bitte gib einen Namen für die Sorte ein."); return; }
+
+            const uniqueId = prefix + "_custom_" + Date.now();
+            customFlavors[prefix].push({ id: uniqueId, name: name, desc: desc || "Selbst hinzugefügt" });
+            
+            localStorage.setItem('holy_custom_flavors', JSON.stringify(customFlavors));
+            closeAddFlavorModal();
+            renderApp();
+        }
 
         document.querySelectorAll('.star').forEach(star => {
             star.onclick = function() {
@@ -272,12 +521,5 @@
             closeModal(); renderApp();
         }
 
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('installBtn').style.display = 'block'; });
-        document.getElementById('installBtn').addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') document.getElementById('installBtn').style.display = 'none'; deferredPrompt = null; } });
-
-        renderApp();
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(()=>{}); }
-    </script>
-</body>
-</html>
+        function deleteRatings() {
+            if(confirm("Möchtest du die Bewertung für diese Sorte wirklich löschen?
