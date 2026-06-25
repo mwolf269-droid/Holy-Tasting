@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOLY Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        /* Spezifische Erweiterungen fürs Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .suggestion-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+            border: 1px dashed var(--primary);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .btn-suggest {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📊 HOLY Tasting Dashboard</h1>
+        <nav class="nav-menu">
+            <a href="index.html" class="active">🏠 Home</a> | 
+            <a href="energy.html">Energy</a> | 
+            <a href="hydration.html">Hydration</a> | 
+            <a href="icedtea.html">Iced Tea</a> | 
+            <a href="milkshake.html">Milkshake</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <!-- STATISTIKEN -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-total-tested">0</div>
+                <div class="stat-label">Sorten getestet</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-perfect-scores">0</div>
+                <div class="stat-label">5★ Favoriten</div>
+            </div>
+        </div>
+
+        <!-- ZUFALLS-VORSCHLAG -->
+        <div class="suggestion-box">
+            <h3 style="font-size: 1rem; margin-bottom: 4px;">🎲 Sorten-Roulette</h3>
+            <p id="suggestion-text" style="font-size: 0.9rem; color: var(--text-muted);">Lust auf etwas Neues?</p>
+            <button class="btn-suggest" onclick="generateSuggestion()">Sorte vorschlagen</button>
+        </div>
+
+        <!-- TOP 5 FAVORITEN -->
+        <div class="category-header">
+            <div class="category-title">🏆 Deine Top 5 Sorten</div>
+        </div>
+        <div id="top-flavors-list" class="flavor-list" style="margin-bottom: 30px;">
+            <!-- Wird dynamisch geladen -->
+        </div>
+    </div>
+
+    <script>
+        // Der komplette Datensatz, um Namen und Beschreibungen zu matchen
+        const allFlavorsMap = {};
+        const allFlavorsList = [];
+        
+        const datasets = [
+            { prefix: "e", list: [
+                {id:"e_kola",name:"Kola Koala",desc:"Cola"}, {id:"e_kiwi",name:"Kiwi Komodo",desc:"Kiwi"}, {id:"e_grape",name:"Grapefruit Giraffe",desc:"Grapefruit"}, {id:"e_cherry",name:"Cherry Cheetah",desc:"Kirsche"}, {id:"e_peacock",name:"Peacock Punch",desc:"Tropical Fruit Punch"}, {id:"e_blood",name:"Blood Orange Bat",desc:"Blutorange"}, {id:"e_apple",name:"Apple Alligator",desc:"Apfel"}, {id:"e_cactus",name:"Cactus Camel",desc:"Kaktusfeige"}, {id:"e_citrus",name:"Citrus Cobra",desc:"Zitrus & Kalamansi"}, {id:"e_tang",name:"Tangerine Tarantula",desc:"Mandarine"}, {id:"e_thai",name:"Thai Lime Toucan",desc:"Kaffir-Limette"}, {id:"e_matcha",name:"Matcha Misaki",desc:"Matcha & Erdbeere"}, {id:"e_cotton",name:"Cotton Candy Caterpillar",desc:"Zuckerwatte"}, {id:"e_eel",name:"Energy Eel",desc:"Guarana"}, {id:"e_burrs",name:"BURRsday Bunny",desc:"Litschi"}, {id:"e_caipi",name:"Caipirinha Crab",desc:"Limette & Rohrzucker"}, {id:"e_mojito",name:"Mojito Macaw",desc:"Limette & Minze"}, {id:"e_daiq",name:"Daiquiri Dolphin",desc:"Erdbeere & Limette"}, {id:"e_capy",name:"Capybara Colada",desc:"Ananas & Kokosnuss"}, {id:"e_wood",name:"Woodruff Wolf",desc:"Waldmeister"}, {id:"e_redbull",name:"Red Bull Frog",desc:"Energy-Drink-Style"}, {id:"e_blue",name:"Blueberry Boomslang",desc:"Heidelbeere"}, {id:"e_rasp",name:"Raspberry Raptor",desc:"Himbeere"}, {id:"e_mango",name:"Mango Mantis",desc:"Mango"}, {id:"e_peach",name:"Peach Panther",desc:"Pfirsich"}, {id:"e_water",name:"Watermelon Wombat",desc:"Wassermelone"}, {id:"e_dragon",name:"Dragonfruit Dragon",desc:"Drachenfrucht"}
+            ]},
+            { prefix: "h", list: [
+                {id:"h_orange",name:"Orange",desc:"Orange"}, {id:"h_multi",name:"Multivitamin",desc:"klassischer Multivitaminsaft"}, {id:"h_water",name:"Wassermelone",desc:"süße Wassermelone"}, {id:"h_dragon",name:"Drachenfrucht",desc:"Dragonfruit"}, {id:"h_guave",name:"Guave",desc:"Guave"}, {id:"h_passion",name:"Passionsfrucht",desc:"Maracuja"}, {id:"h_cherry",name:"Sauerkirsche",desc:"Sour Cherry"}, {id:"h_coco",name:"Kokosnuss",desc:"Kokos"}, {id:"h_pineapple",name:"Ananas",desc:"Ananas"}, {id:"h_mango",name:"Mango",desc:"Mango"}, {id:"h_peach",name:"Pfirsich",desc:"Pfirsich"}, {id:"h_rasp",name:"Himbeere",desc:"Himbeere"}, {id:"h_lemon",name:"Zitrone",desc:"Lemon"}
+            ]},
+            { prefix: "t", list: [
+                {id:"t_matchamint",name:"Lime x Matcha x Mint",desc:"Limette, Matcha & Minze"}, {id:"t_peach",name:"Schwarzer Tee Pfirsich",desc:"Peach Black Tea"}, {id:"t_mango",name:"Mango Passionfruit",desc:"Mango & Maracuja"}, {id:"t_darj",name:"Darjeeling x Honig",desc:"Darjeeling Tee mit Honignote"}, {id:"t_lemon",name:"Zitrone x Honig",desc:"Lemon Honey"}, {id:"t_water",name:"Watermelon",desc:"Wassermelone"}, {id:"t_hibiscus",name:"Hibiscus Acai",desc:"Hibiskus & Acai"}
+            ]},
+            { prefix: "m", list: [
+                {id:"m_vanilla",name:"Vanille",desc:"Vanilla"}, {id:"m_strawberry",name:"Erdbeere",desc:"Strawberry"}, {id:"m_banana",name:"Banane",desc:"Banana"}, {id:"m_caramel",name:"Karamell",desc:"Caramel"}, {id:"m_hazel",name:"Haselnuss",desc:"Hazelnut"}, {id:"m_matcha",name:"Matcha Latte",desc:"Matcha & Milchshake"}
+            ]}
+        ];
+
+        // Maps & Listen aufbauen
+        datasets.forEach(d => {
+            d.list.forEach(f => {
+                allFlavorsMap[f.id] = f;
+                allFlavorsList.push(f);
+            });
+        });
+
+        // Auch selbst hinzugefügte Sorten einladen
+        try {
+            const custom = JSON.parse(localStorage.getItem('holy_custom_flavors'));
+            if(custom) {
+                Object.keys(custom).forEach(prefix => {
+                    custom[prefix].forEach(f => {
+                        allFlavorsMap[f.id] = f;
+                        allFlavorsList.push(f);
+                    });
+                });
+            }
+        } catch(e){}
+
+        // Daten laden & verarbeiten
+        let userRatings = {};
+        try {
+            userRatings = JSON.parse(localStorage.getItem('holy_ratings')) || {};
+        } catch(e){}
+
+        function initDashboard() {
+            let totalTested = 0;
+            let perfectScores = 0;
+            let ratedFlavors = [];
+
+            Object.keys(userRatings).forEach(id => {
+                const r = userRatings[id];
+                if(r && (r.geschmack > 0 || r.fazit)) {
+                    totalTested++;
+                    if(r.geschmack === 5) perfectScores++;
+                    
+                    if(allFlavorsMap[id]) {
+                        ratedFlavors.push({
+                            id: id,
+                            name: allFlavorsMap[id].name,
+                            desc: allFlavorsMap[id].desc,
+                            geschmack: r.geschmack || 0,
+                            // Gesamtpunktzahl für Tie-Breaker (Gleichstand bei Geschmack)
+                            totalScore: (r.geschmack || 0) + (r.geruch || 0) + (r.balance || 0) + (r.intensitaet || 0)
+                        });
+                    }
+                }
+            });
+
+            // Statistiken setzen
+            document.getElementById('stat-total-tested').innerText = totalTested;
+            document.getElementById('stat-perfect-scores').innerText = perfectScores;
+
+            // Top 5 sortieren (Erst nach Geschmack, dann nach Gesamtpunktzahl)
+            ratedFlavors.sort((a, b) => {
+                if(b.geschmack !== a.geschmack) return b.geschmack - a.geschmack;
+                return b.totalScore - a.totalScore;
+            });
+
+            const topListContainer = document.getElementById('top-flavors-list');
+            topListContainer.innerHTML = '';
+
+            if(ratedFlavors.length === 0) {
+                topListContainer.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:10px;">Noch keine Bewertungen vorhanden.</p>';
+            } else {
+                const top5 = ratedFlavors.slice(0, 5);
+                top5.forEach((f, idx) => {
+                    // Mapping zurück auf die richtige HTML-Rubrik
+                    let targetPage = "energy.html";
+                    if(f.id.startsWith("h")) targetPage = "hydration.html";
+                    if(f.id.startsWith("t")) targetPage = "icedtea.html";
+                    if(f.id.startsWith("m")) targetPage = "milkshake.html";
+
+                    const card = document.createElement('div');
+                    card.className = 'flavor-card';
+                    card.onclick = () => window.location.href = targetPage;
+                    card.innerHTML = `
+                        <div class="flavor-info">
+                            <h3>#${idx+1} ${f.name}</h3>
+                            <p>${f.desc}</p>
+                        </div>
+                        <div class="card-right">
+                            <div class="status-badge">${f.geschmack} ★</div>
+                        </div>
+                    `;
+                    topListContainer.appendChild(card);
+                });
+            }
+        }
+
+        function generateSuggestion() {
+            // Finde alle Sorten, die noch KEINE Bewertung haben
+            const unrated = allFlavorsList.filter(f => !userRatings[f.id] || (!userRatings[f.id].geschmack && !userRatings[f.id].fazit));
+            const textEl = document.getElementById('suggestion-text');
+
+            if(unrated.length === 0) {
+                textEl.innerText = "🎉 Wahnsinn! Du hast alle Sorten schon probiert!";
+            } else {
+                const randomFlavor = unrated[Math.floor(Math.random() * unrated.length)];
+                let catName = "Energy";
+                if(randomFlavor.id.startsWith("h")) catName = "Hydration";
+                if(randomFlavor.id.startsWith("t")) catName = "Iced Tea";
+                if(randomFlavor.id.startsWith("m")) catName = "Milkshake";
+
+                textEl.innerHTML = `Wie wäre es heute mit: <strong>${randomFlavor.name}</strong> (${randomFlavor.desc}) aus der Rubrik <em>${catName}</em>?`;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", initDashboard);
+    </script>
+</body>
+</html>
