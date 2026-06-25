@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOLY Milkshake - Tasting</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>🥤 HOLY Milkshake Tracker</h1>
+        <nav class="nav-menu">
+            <a href="energy.html">Energy</a> | 
+            <a href="hydration.html">Hydration</a> | 
+            <a href="icedtea.html">Iced Tea</a> | 
+            <a href="milkshake.html" class="active">Milkshake</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="category-header">
+            <div class="category-title">🥤 Cremig & Koffeinfrei</div>
+            <button class="btn-add-flavor" onclick="openAddFlavorModal()">➕ Hinzufügen</button>
+        </div>
+        <div id="app-content" class="flavor-list">Sorten werden geladen...</div>
+    </div>
+
+    <!-- Modal für Bewertung -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h2 id="modalFlavorName">Sorte</h2>
+            <p id="modalFlavorDesc" style="color: var(--text-muted); margin-bottom: 15px;"></p>
+            <div class="rating-row"><span>👃 Geruch</span><div class="stars" data-metric="geruch"><span class="star" data-value="1">★</span><span class="star" data-value="2">★</span><span class="star" data-value="3">★</span><span class="star" data-value="4">★</span><span class="star" data-value="5">★</span></div></div>
+            <div class="rating-row"><span>👅 Geschmack</span><div class="stars" data-metric="geschmack"><span class="star" data-value="1">★</span><span class="star" data-value="2">★</span><span class="star" data-value="3">★</span><span class="star" data-value="4">★</span><span class="star" data-value="5">★</span></div></div>
+            <div class="rating-row"><span>⚖️ Balance</span><div class="stars" data-metric="balance"><span class="star" data-value="1">★</span><span class="star" data-value="2">★</span><span class="star" data-value="3">★</span><span class="star" data-value="4">★</span><span class="star" data-value="5">★</span></div></div>
+            <div class="rating-row"><span>💥 Intensität</span><div class="stars" data-metric="intensitaet"><span class="star" data-value="1">★</span><span class="star" data-value="2">★</span><span class="star" data-value="3">★</span><span class="star" data-value="4">★</span><span class="star" data-value="5">★</span></div></div>
+            <textarea id="modalFazit" placeholder="Mein Fazit..."></textarea>
+            <div class="modal-actions">
+                <div class="main-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">Abbrechen</button>
+                    <button class="btn btn-primary" onclick="saveRatings()">Speichern</button>
+                </div>
+                <button id="deleteBtn" class="btn btn-danger" onclick="deleteRatings()" style="display: none;">Bewertung löschen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Sorten hinzufügen -->
+    <div class="modal-overlay" id="addFlavorOverlay">
+        <div class="modal">
+            <h2>Sorte manuell hinzufügen</h2>
+            <div class="input-group"><label>Name der Sorte</label><input type="text" id="newFlavorName" class="input-field" placeholder="z.B. Mango Monster"></div>
+            <div class="input-group"><label>Beschreibung / Geschmack</label><input type="text" id="newFlavorDesc" class="input-field" placeholder="z.B. Exotische Mango"></div>
+            <div class="modal-actions"><div class="main-actions"><button class="btn btn-secondary" onclick="closeAddFlavorModal()">Abbrechen</button><button class="btn btn-primary" onclick="saveCustomFlavor()">Hinzufügen</button></div></div>
+        </div>
+    </div>
+
+    <script src="app-logic.js"></script>
+    <script>
+        const PREFIX = "m";
+        const staticFlavors = [
+            {id:"m_vanilla",name:"Vanille",desc:"Vanilla"}, {id:"m_strawberry",name:"Erdbeere",desc:"Strawberry"},
+            {id:"m_banana",name:"Banane",desc:"Banana"}, {id:"m_caramel",name:"Karamell",desc:"Caramel"},
+            {id:"m_hazel",name:"Haselnuss",desc:"Hazelnut"}, {id:"m_matcha",name:"Matcha Latte",desc:"Matcha & Milchshake"}
+        ];
+        initPage(PREFIX, staticFlavors);
+    </script>
+</body>
+</html>
