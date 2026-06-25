@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HOLY Tasting App v5.3</title>
+    <title>HOLY Tasting App v5.4</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -139,6 +139,12 @@
             color: var(--text-muted);
         }
 
+        .card-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
         .status-badge {
             font-size: 0.75rem;
             background: rgba(34, 197, 94, 0.1);
@@ -148,6 +154,17 @@
             font-weight: 600;
             border: 1px solid rgba(34, 197, 94, 0.2);
             display: none;
+        }
+
+        .btn-delete-flavor {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
         }
 
         .modal-overlay {
@@ -285,7 +302,7 @@
     </style>
 </head>
 
-  <body>
+    <body>
 
     <header>
         <h1>🥤 My HOLY Tasting Tracker</h1>
@@ -294,10 +311,8 @@
     <div class="container">
         <button id="installBtn" class="pwa-btn">📲 App auf dem Handy installieren</button>
         
-        <!-- Hauptinhalt -->
         <div id="app-content">Sorten werden geladen...</div>
 
-        <!-- Verwaltung -->
         <div class="mgmt-section">
             <div class="mgmt-title">⚙️ Daten & App Verwaltung</div>
             <button class="btn-mgmt" onclick="updateAppVersion(true)">🔄 App-Cache leeren & Update erzwingen (Daten bleiben erhalten)</button>
@@ -309,7 +324,6 @@
         </div>
     </div>
 
-    <!-- Modal für Bewertung -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
             <h2 id="modalFlavorName">Sorte</h2>
@@ -332,7 +346,6 @@
         </div>
     </div>
 
-    <!-- Modal für Sorten hinzufügen -->
     <div class="modal-overlay" id="addFlavorOverlay">
         <div class="modal">
             <h2>Sorte manuell hinzufügen</h2>
@@ -356,7 +369,7 @@
     </div>
 
     <script>
-        const APP_VERSION = "5.3";
+        const APP_VERSION = "5.4";
 
         const baseDataset = [
             { 
@@ -406,7 +419,7 @@
             }
         ];
 
-              let userRatings = {};
+                let userRatings = {};
         let customFlavors = { e: [], t: [], h: [], m: [] };
         let currentFlavorId = null;
         let tempRatings = { geruch: 0, geschmack: 0, balance: 0, intensitaet: 0 };
@@ -456,12 +469,38 @@
                     const card = document.createElement('div');
                     card.className = 'flavor-card';
                     card.onclick = () => openModal(f.id, f.name, f.desc);
+                    
+                    const isCustom = f.id.includes('_custom_');
                     const isRated = userRatings[f.id] && (userRatings[f.id].geschmack > 0 || userRatings[f.id].fazit);
-                    card.innerHTML = `<div class="flavor-info"><h3>${f.name}</h3><p>${f.desc}</p></div><div class="status-badge" style="display: ${isRated ? 'block' : 'none'}">${isRated ? (userRatings[f.id].geschmack || 0) + ' ★' : ''}</div>`;
+                    
+                    let rightSideHTML = '<div class="card-right">';
+                    rightSideHTML += `<div class="status-badge" style="display: ${isRated ? 'block' : 'none'}">${isRated ? (userRatings[f.id].geschmack || 0) + ' ★' : ''}</div>`;
+                    
+                    if (isCustom) {
+                        rightSideHTML += `<button class="btn-delete-flavor" onclick="deleteCustomFlavor(event, '${cat.prefix}', '${f.id}')">🗑️</button>`;
+                    }
+                    rightSideHTML += '</div>';
+
+                    card.innerHTML = `<div class="flavor-info"><h3>${f.name}</h3><p>${f.desc}</p></div>${rightSideHTML}`;
                     list.appendChild(card);
                 });
                 container.appendChild(list);
             });
+        }
+
+        function deleteCustomFlavor(event, prefix, id) {
+            event.stopPropagation(); // Verhindert das Öffnen des Bewertungsmodals beim Klick auf Löschen
+            if(confirm("Möchtest du diese selbst hinzugefügte Sorte (und ihre Bewertung) wirklich dauerhaft löschen?")) {
+                if(customFlavors[prefix]) {
+                    customFlavors[prefix] = customFlavors[prefix].filter(f => f.id !== id);
+                    localStorage.setItem('holy_custom_flavors', JSON.stringify(customFlavors));
+                }
+                if(userRatings[id]) {
+                    delete userRatings[id];
+                    localStorage.setItem('holy_ratings', JSON.stringify(userRatings));
+                }
+                renderApp();
+            }
         }
 
         function openModal(id, name, desc) {
