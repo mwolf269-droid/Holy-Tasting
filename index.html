@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HOLY Tasting App v5.1</title>
+    <title>HOLY Tasting App v5.2</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -180,6 +180,7 @@
             font-size: 1.6rem;
             color: var(--star-inactive);
             cursor: pointer;
+            padding: 0 2px;
         }
 
         .star.active {
@@ -289,7 +290,7 @@
     <div class="container">
         <button id="installBtn" class="pwa-btn">📲 App auf dem Handy installieren</button>
         
-        <div id="app-content">Lädt Sortenliste...</div>
+        <div id="app-content">Sorten werden geladen...</div>
 
         <div class="mgmt-section">
             <div class="mgmt-title">⚙️ Daten & App Verwaltung</div>
@@ -302,7 +303,6 @@
         </div>
     </div>
 
-    <!-- Modal für Bewertung -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
             <h2 id="modalFlavorName">Sorte</h2>
@@ -325,7 +325,6 @@
         </div>
     </div>
 
-    <!-- Modal für Sorten hinzufügen -->
     <div class="modal-overlay" id="addFlavorOverlay">
         <div class="modal">
             <h2>Sorte manuell hinzufügen</h2>
@@ -337,7 +336,7 @@
             </div>
             <div class="input-group">
                 <label for="newFlavorDesc">Beschreibung / Geschmack</label>
-                <input type="text" id="newFlavorDesc" class="input-field" placeholder="z.B. Exotische Mango mit Lime-Kick">
+                <input type="text" id="newFlavorDesc" class="input-field" placeholder="z.B. Exotische Mango">
             </div>
             <div class="modal-actions">
                 <div class="main-actions">
@@ -397,20 +396,26 @@
             }
         ];
 
-        // Sicherheitsprüfungen beim Laden, um Rendering-Blockaden zu verhindern
         let userRatings = {};
-        try { userRatings = JSON.parse(localStorage.getItem('holy_ratings')) || {}; } catch(e) { userRatings = {}; }
-        
         let customFlavors = { e: [], t: [], h: [], m: [] };
-        try { 
-            let storedCustom = JSON.parse(localStorage.getItem('holy_custom_flavors'));
-            if(storedCustom && typeof storedCustom === 'object' && storedCustom.e) {
-                customFlavors = storedCustom;
-            }
-        } catch(e) { customFlavors = { e: [], t: [], h: [], m: [] }; }
-        
         let currentFlavorId = null;
         let tempRatings = { geruch: 0, geschmack: 0, balance: 0, intensitaet: 0 };
+
+        // Sicherer Datenimport beim Laden der App
+        function loadStorageData() {
+            try {
+                const r = localStorage.getItem('holy_ratings');
+                if (r) userRatings = JSON.parse(r) || {};
+            } catch(e) { userRatings = {}; }
+
+            try {
+                const c = localStorage.getItem('holy_custom_flavors');
+                if (c) {
+                    const parsed = JSON.parse(c);
+                    if (parsed && typeof parsed === 'object' && parsed.e) customFlavors = parsed;
+                }
+            } catch(e) { customFlavors = { e: [], t: [], h: [], m: [] }; }
+        }
 
         function getFullDataset() {
             return baseDataset.map(cat => {
@@ -423,6 +428,7 @@
             const container = document.getElementById('app-content');
             if(!container) return;
             container.innerHTML = '';
+            
             const fullDataset = getFullDataset();
 
             fullDataset.forEach((cat, index) => {
@@ -456,7 +462,11 @@
             const existing = userRatings[id] || { geruch: 0, geschmack: 0, balance: 0, intensitaet: 0, fazit: "" };
             tempRatings = { ...existing };
             document.getElementById('modalFazit').value = existing.fazit || "";
-            document.querySelectorAll('.stars').forEach(sc => updateStarsVisual(sc, tempRatings[sc.getAttribute('data-metric')]));
+            
+            document.querySelectorAll('.stars').forEach(sc => {
+                const metric = sc.getAttribute('data-metric');
+                updateStarsVisual(sc, tempRatings[metric] || 0);
+            });
             
             const isRated = userRatings[id] && (userRatings[id].geschmack > 0 || userRatings[id].geruch > 0 || userRatings[id].fazit);
             document.getElementById('deleteBtn').style.display = isRated ? 'block' : 'none';
@@ -491,17 +501,23 @@
             renderApp();
         }
 
+ // Sicherer Click-Handler für Sterne
         document.querySelectorAll('.star').forEach(star => {
-            star.onclick = function() {
+            star.addEventListener('click', function(e) {
+                e.stopPropagation();
                 const val = parseInt(this.getAttribute('data-value'));
                 const container = this.parentElement;
-                tempRatings[container.getAttribute('data-metric')] = val;
+                const metric = container.getAttribute('data-metric');
+                tempRatings[metric] = val;
                 updateStarsVisual(container, val);
-            };
+            });
         });
 
         function updateStarsVisual(container, value) {
-            container.querySelectorAll('.star').forEach(s => s.classList.toggle('active', parseInt(s.getAttribute('data-value')) <= value));
+            container.querySelectorAll('.star').forEach(s => {
+                const sVal = parseInt(s.getAttribute('data-value'));
+                s.classList.toggle('active', sVal <= value);
+            });
         }
 
         function saveRatings() {
@@ -512,4 +528,74 @@
         }
 
         function deleteRatings() {
-            if(confirm("Möchtest du die Bewer
+            if(confirm("Möchtest du die Bewertung für diese Sorte wirklich löschen?")) {
+                delete userRatings[currentFlavorId];
+                localStorage.setItem('holy_ratings', JSON.stringify(userRatings));
+                closeModal(); renderApp();
+            }
+        }
+
+        function exportBackup() {
+            const exportPackage = { ratings: userRatings, custom: customFlavors };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportPackage, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "holy_tasting_complete_backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function triggerImportInput() { document.getElementById('importFile').click(); }
+
+        function importBackup(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData.ratings || importedData.custom) {
+                        userRatings = importedData.ratings || {};
+                        customFlavors = importedData.custom || { e: [], t: [], h: [], m: [] };
+                    } else {
+                        userRatings = importedData;
+                    }
+                    localStorage.setItem('holy_ratings', JSON.stringify(userRatings));
+                    localStorage.setItem('holy_custom_flavors', JSON.stringify(customFlavors));
+                    renderApp();
+                    alert("✅ Daten erfolgreich importiert!");
+                } catch (err) { alert("❌ Fehler beim Lesen der Datei."); }
+            };
+            reader.readAsText(file);
+            input.value = '';
+        }
+
+        function updateAppVersion() {
+            if (confirm("Möchtest du die App jetzt updaten? Deine Bewertungen & eigene Sorten bleiben komplett erhalten!")) {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                        for(let registration of registrations) { registration.unregister(); }
+                        window.location.reload(true);
+                    });
+                } else { window.location.reload(true); }
+            }
+        }
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('installBtn').style.display = 'block'; });
+        document.getElementById('installBtn').addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') document.getElementById('installBtn').style.display = 'none'; deferredPrompt = null; } });
+
+        // App-Startabsicherung
+        document.addEventListener("DOMContentLoaded", function() {
+            loadStorageData();
+            renderApp();
+            if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+        });
+        
+        // Fallback falls DOMContentLoaded schon gefeuert hat
+        loadStorageData();
+        renderApp();
+    </script>
+</body>
+</html>
